@@ -55,7 +55,7 @@ router.post('/create' , async (req,res) => {
 });
 
 // criando o endpoint para alterar o loja
-router.put('/update/:id', auth, async (req,res) => {
+router.put('/update/:id',  async (req,res) => {
     const { nome, site,tipo, cidade, estado } = req.body;
     if (!nome || !site ) 
         return res.send({ error: 'Verifique se todos os campos obrigatórios foram informados! '});
@@ -74,7 +74,7 @@ router.put('/update/:id', auth, async (req,res) => {
 });
 
 // criando o endpoint para apagar usuário
-router.delete('/delete/:id', auth, async (req,res) => {
+router.delete('/delete/:id', async (req,res) => {
     try {
         await Lojas.findByIdAndDelete(req.params.id);
         return res.send({ error: 'Loja removido com sucesso!' });

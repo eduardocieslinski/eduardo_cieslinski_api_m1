@@ -27,30 +27,29 @@ const createUserToken = (userId) => {
 
 // criando o endpoint para autenticar na API
 router.post('/auth', (req,res) => {
-    const { login, senha } = req.body;
-    // testando se login ou senha não foram informados
-    if (!login || !senha)
+    const { email, password } = req.body;
+    // testando se email ou senha não foram informados
+    if (!email || !password)
         return res.send({ error: 'Dados inválidos! '});
     // se foram informados
     //verificando se ja existe o e-mail
-    Users.findOne({ login }, (err, data) => {
-    
+    Users.findOne({ email }, (err, data) => {
         if (err)
             return res.send({ error: 'Erro ao buscar usuário!' });
         if (!data)
             return res.send({ error: 'Usuário não encontrado! '});
         // caso não ocorra nenhuma das situações acima
         // comparar a senha informada com a senha salva
-        bcrypt.compare(senha,data.senha, (err,same) => {
+        bcrypt.compare(password,data.password, (err,same) => {
             // testando se as senhas não são iguais
             if (!same)
                 return res.send({ error: 'Erro na autenticação!'});
             // se as senhas forem iguais
             // impedindo o retorno da senha
-            data.senha = undefined;
+            data.password = undefined;
             return res.send({ data, token: createUserToken(data.id) });
         });
-    }).select('+senha');
+    }).select('+password');
 });
 
 // criando o endpoint para listar todo os usuários
@@ -66,20 +65,20 @@ router.get('/',  async (req,res) => {
 });
 
 // criando o endpoint para salvar usuário
-router.post('/create' ,auth, async (req,res) => {
-    const { nome, sobrenome, nascimento, login, senha, dicaDeSenha, cidade, estado } = req.body;
-    //console.log(`${nome} - ${sobrenome} - ${nascimento} - ${login} - ${senha}`);
+router.post('/create',  async (req,res) => {
+    const { name, userName,  email, phone, password } = req.body;
+    console.log(`${name} - ${userName} - ${phone} - ${email} - ${password}`);
     // testando se todos os campos obrigatórios foram informados
-    if (!nome || !sobrenome || !login || !senha) 
+    if (!name || !userName || !email || !password) 
         return res.send({ error: 'Verifique se todos os campos obrigatórios foram informados! '});
     try {
-        // verificando se o usuário/login já está cadastrado
-        if (await Users.findOne({ login }))
+        // verificando se o usuário/email já está cadastrado
+        if (await Users.findOne({ userName, email }))
             return res.send({ error: 'Usuário já cadastrado! '});
         // se o usuário ainda nao for cadastrado
         const user = await Users.create(req.body);
         // impedindo o retorno da senha
-        user.senha = undefined;
+        user.password = undefined;
         return res.status(201).send({ user, token: createUserToken(user.id) });
     }
     catch (err) {
@@ -88,20 +87,21 @@ router.post('/create' ,auth, async (req,res) => {
 });
 
 // criando o endpoint para alterar usuário
-router.put('/update/:id', auth, async (req,res) => {
-    const { nome, sobrenome, nascimento, login, senha, dicaDeSenha, cidade, estado } = req.body;
-    if (!nome || !sobrenome || !login || !senha) 
+router.put('/update/:id',  async (req,res) => {
+    const { name, userName,  email, phone, password } = req.body;
+    console.log(`${name} - ${userName} - ${phone} - ${email} - ${password}`);
+    if (!name || !userName || !email || !password) 
         return res.send({ error: 'Verifique se todos os campos obrigatórios foram informados! '});
     try {
-        // verificando se o usuário/login já está cadastrado
-        if (await Users.findOne({  login }))
-            return res.send({ error: 'Usuário já cadastrado! '});
+        // verificando se o usuário/email já está cadastrado
+        if (await Users.findOne({ userName, email }))
+            return res.send({ error: 'Usuário já cadastrado!'});
         // se o usuário ainda nao for cadastrado
         const user = await Users.findByIdAndUpdate(req.params.id, req.body);
         // realizando uma nova busca após a alteração para obter o usuário com as alterações
         const userChanged = await Users.findById(req.params.id);
         // impedindo o retorno da senha
-        userChanged.senha = undefined;
+        userChanged.password = undefined;
         return res.status(201).send({ userChanged });
     }
     catch (err) {
@@ -110,7 +110,7 @@ router.put('/update/:id', auth, async (req,res) => {
 });
 
 // criando o endpoint para apagar usuário
-router.delete('/delete/:id', auth, async (req,res) => {
+router.delete('/delete/:id',  async (req,res) => {
     try {
         await Users.findByIdAndDelete(req.params.id);
         return res.send({ error: 'Usuário removido com sucesso!' });
